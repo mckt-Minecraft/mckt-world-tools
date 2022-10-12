@@ -23,9 +23,7 @@ object ConvertCommand : Command(
         LOGGER.info("Converting ${inFile.name} from ${inFormat.friendlyName} to ${outFormat.friendlyName}...")
         val startTime = System.nanoTime()
         try {
-            if (!inFormat.convertTo(outFormat, inFile, outFile)) {
-                throw SaveFormat.ConversionFailedException("Unsupported conversion")
-            }
+            inFormat.convertTo(outFormat, inFile, outFile)
         } catch (e: Exception) {
             val baseMessage = "Conversion failed in ${getDuration(startTime)}"
             if (e is SaveFormat.ConversionFailedException) {

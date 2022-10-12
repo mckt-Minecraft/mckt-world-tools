@@ -54,6 +54,7 @@ class PalettedStorage<V>(
     }
 
     val paletteItems: Sequence<V> get() = (0 until palette.size).asSequence().map { palette.getValue(it)!! }
+    val paletteSize get() = palette.size
 
     private fun expandPalette() {
         palette = palette.copyOf(::Int2ObjectOpenHashMap, ::Object2IntOpenHashMap)

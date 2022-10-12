@@ -15,13 +15,13 @@ class LegacyRegion(val x: Int, val z: Int, val regionFile: File) : Region() {
         private val LOGGER = LoggerFactory.getLogger("LEGACY")
     }
 
-    fun save() {
+    override fun save() {
         BinaryTagIO.writer().write(toNbt().also {
             LOGGER.info("Writing...")
         }, regionFile.toPath(), BinaryTagIO.Compression.GZIP)
     }
 
-    fun load() {
+    override fun load() {
         readNbt(BinaryTagIO.unlimitedReader().read(regionFile.toPath(), BinaryTagIO.Compression.GZIP))
     }
 
@@ -32,7 +32,7 @@ class LegacyRegion(val x: Int, val z: Int, val regionFile: File) : Region() {
             chunks.toList().forEachIndexed { i, chunk ->
                 if (chunk != null) {
                     chunksPresent.set(i)
-                    add(chunk.toNbt())
+                    add(chunk.toMcktNbt())
                 }
                 val currentTime = System.nanoTime()
                 if (currentTime - time >= 1_000_000_000) {
@@ -57,7 +57,7 @@ class LegacyRegion(val x: Int, val z: Int, val regionFile: File) : Region() {
                 val memIndex = (x shl 5) + z
                 if (chunksPresent[memIndex]) {
                     chunks[memIndex] = WorldChunk(baseX + x, baseZ + z, x, z).also {
-                        it.readNbt(chunksNbt.getCompound(dataIndex++))
+                        it.readMcktNbt(chunksNbt.getCompound(dataIndex++))
                     }
                 } else {
                     chunks[memIndex] = null
