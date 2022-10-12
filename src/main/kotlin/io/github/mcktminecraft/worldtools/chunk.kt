@@ -103,10 +103,12 @@ class WorldChunk(val absX: Int, val absZ: Int, val xInRegion: Int, val zInRegion
         sections.fill(null)
         for (data in nbt.getList("sections", BinaryTagTypes.COMPOUND)) {
             data as CompoundBinaryTag
-            val y = data.getByte("y").toInt()
+            val y = data.getByte("Y").toInt()
             val section = ChunkSection(this, y)
             section.readVanillaNbt(data)
-            sections[y - 127] = section
+            if (section.blockCount > 0) {
+                sections[y + 127] = section
+            }
         }
         blockEntities.clear()
         val chunkOrigin = BlockPosition(absX shl 4, 0, absZ shl 4)
@@ -189,6 +191,7 @@ class ChunkSection(val chunk: WorldChunk, val y: Int) {
 
     fun readVanillaNbt(nbt: CompoundBinaryTag) {
         val states = nbt.getCompound("block_states")
+        if (states == CompoundBinaryTag.empty()) return
         data.setPaletteItems(states.getList("palette", BinaryTagTypes.COMPOUND).map {
             it as CompoundBinaryTag
             BlockState(
@@ -200,7 +203,7 @@ class ChunkSection(val chunk: WorldChunk, val y: Int) {
         })
         val storage = states.getLongArray("data", null)
         if (storage != null) {
-            data.storage = SimpleBitStorage(max(4, 32 - data.paletteSize.countLeadingZeroBits()), 4096, storage)
+            data.storage = SimpleBitStorage(max(4, 32 - (data.paletteSize - 1).countLeadingZeroBits()), 4096, storage)
         }
         blockCount = 0
         repeat(4096) { i ->

@@ -68,7 +68,7 @@ class AnvilRegion(val x: Int, val z: Int, val regionFile: File) : DirtiableRegio
                         else -> throw IllegalArgumentException("Unknown compression type $cid")
                     }
                     dirtyChunks.clear(getChunkIndex(x, z))
-                    setChunk(x, z, WorldChunk(this.x + x, this.z + z, x, z).also { it.readMcktNbt(
+                    setChunk(x, z, WorldChunk(this.x + x, this.z + z, x, z).also { it.readVanillaNbt(
                         BinaryTagIO.unlimitedReader().read(chis, compression)
                     ) })
                     val currentTime = System.nanoTime()

@@ -17,23 +17,36 @@ object ConvertCommand : Command(
     override fun run(args: Array<String>, commands: Map<String, Command>): Boolean {
         if (args.size < 4) return false
         val inFormat = getSaveFormat(args[0])
-        val inFile = File(args[1])
+        val inFileOrDir = File(args[1])
         val outFormat = getSaveFormat(args[2])
-        val outFile = File(args[3])
-        LOGGER.info("Converting ${inFile.name} from ${inFormat.friendlyName} to ${outFormat.friendlyName}...")
-        val startTime = System.nanoTime()
-        try {
-            inFormat.convertTo(outFormat, inFile, outFile)
-        } catch (e: Exception) {
-            val baseMessage = "Conversion failed in ${getDuration(startTime)}"
-            if (e is SaveFormat.ConversionFailedException) {
-                LOGGER.error("{}: {}", baseMessage, e.message)
-            } else {
-                LOGGER.error(baseMessage, e)
+        val outFileOrDir = File(args[3])
+        val files = if (inFileOrDir.isDirectory) {
+            inFileOrDir.listFiles { _, name -> name matches inFormat.filenameRegex }.map {
+                it to File(outFileOrDir, inFormat.convertFilenameTo(it.name, outFormat))
             }
-            exitProcess(1)
+        } else listOf(inFileOrDir to outFileOrDir)
+        var failures = 0
+        for ((inFile, outFile) in files) {
+            LOGGER.info("Converting ${inFile.name} from ${inFormat.friendlyName} to ${outFormat.friendlyName}...")
+            val startTime = System.nanoTime()
+            try {
+                outFile.parentFile.mkdirs()
+                inFormat.convertTo(outFormat, inFile, outFile)
+            } catch (e: Exception) {
+                val baseMessage = "Conversion failed in ${getDuration(startTime)}"
+                if (e is SaveFormat.ConversionFailedException) {
+                    LOGGER.error("{}: {}", baseMessage, e.message)
+                } else {
+                    LOGGER.error(baseMessage, e)
+                }
+                failures++
+                continue
+            }
+            LOGGER.info("Conversion succeeded in ${getDuration(startTime)}")
         }
-        LOGGER.info("Conversion succeeded in ${getDuration(startTime)}")
+        if (failures > 0) {
+            exitProcess(failures)
+        }
         return true
     }
 

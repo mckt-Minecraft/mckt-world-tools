@@ -3,15 +3,21 @@ package io.github.mcktminecraft.worldtools
 import io.github.mcktminecraft.worldtools.format.anvil.AnvilRegion
 import io.github.mcktminecraft.worldtools.format.legacy.LegacyRegion
 import io.github.mcktminecraft.worldtools.format.standard.StandardRegion
+import io.github.mcktminecraft.worldtools.util.N
 import io.github.mcktminecraft.worldtools.util.RegionCreator
 import org.slf4j.LoggerFactory
 import java.io.File
 import kotlin.io.path.copyTo
 
-enum class SaveFormat(val friendlyName: String, val regionCreator: RegionCreator) {
-    LEGACY("legacy", ::LegacyRegion),
-    STANDARD("standard", ::StandardRegion),
-    ANVIL("anvil", ::AnvilRegion);
+enum class SaveFormat(
+    val friendlyName: String,
+    val regionCreator: RegionCreator,
+    val filenameRegex: Regex,
+    val buildFilename: (x: Int, z: Int) -> String
+) {
+    LEGACY("legacy", ::LegacyRegion, Regex("""^region_${N}_$N\.nbt$"""), { x, z -> "region_${x}_$z.nbt" }),
+    STANDARD("standard", ::StandardRegion, Regex("""^region_${N}_$N\.zip$"""), { x, z -> "region_${x}_$z.zip" }),
+    ANVIL("anvil", ::AnvilRegion, Regex("""^r\.$N\.$N\.mca$"""), { x, z -> "r.$x.$z.mca" });
 
     class ConversionFailedException(message: String) : RuntimeException(message)
 
@@ -68,5 +74,11 @@ enum class SaveFormat(val friendlyName: String, val regionCreator: RegionCreator
         }
         LOGGER.info("Saving chunks...")
         outRegion.save()
+    }
+
+    fun convertFilenameTo(filename: String, toFormat: SaveFormat): String {
+        val parts = filenameRegex.matchEntire(filename)?.groupValues
+            ?: throw IllegalArgumentException("Filename \"$filename\" does not match \"$filenameRegex\"")
+        return toFormat.buildFilename(parts[1].toInt(), parts[2].toInt())
     }
 }
