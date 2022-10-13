@@ -53,8 +53,8 @@ class AnvilRegion(val x: Int, val z: Int, val regionFile: File) : DirtiableRegio
             val chis = Channels.newInputStream(raf.channel)
             var read = 0
             var time = System.nanoTime()
-            repeat(16) { x ->
-                repeat(16) inner@ { z ->
+            repeat(32) { x ->
+                repeat(32) inner@ { z ->
                     read++
                     raf.seek((z shl 5 or x shl 2).toLong())
                     val locationData = raf.readInt()

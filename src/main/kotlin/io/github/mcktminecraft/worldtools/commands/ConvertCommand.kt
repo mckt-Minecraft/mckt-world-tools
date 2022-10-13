@@ -26,6 +26,8 @@ object ConvertCommand : Command(
             }
         } else listOf(inFileOrDir to outFileOrDir)
         var failures = 0
+        LOGGER.info("Converting ${files.size} file(s) from ${inFormat.friendlyName} to ${outFormat.friendlyName}...")
+        val totalStart = System.nanoTime()
         for ((inFile, outFile) in files) {
             LOGGER.info("Converting ${inFile.name} from ${inFormat.friendlyName} to ${outFormat.friendlyName}...")
             val startTime = System.nanoTime()
@@ -44,6 +46,7 @@ object ConvertCommand : Command(
             }
             LOGGER.info("Conversion succeeded in ${getDuration(startTime)}")
         }
+        LOGGER.info("Conversion finished in ${getDuration(totalStart)} with $failures failure(s)")
         if (failures > 0) {
             exitProcess(failures)
         }
